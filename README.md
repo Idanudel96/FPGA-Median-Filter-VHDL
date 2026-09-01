@@ -117,13 +117,11 @@ Memory-related modules include:
 ### Input Image
 
 The input image contains salt-and-pepper noise and is used as the source data for the FPGA processing pipeline.
-
 ![Noisy Input Image](input%20image.jpg)
 
 ### Filtered Output
 
 The output image demonstrates the effect of the 3×3 median filter after hardware processing.
-
 ![Filtered Output Image](output%20image.jpg)
 
 ## Tools & Technologies
