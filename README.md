@@ -1,27 +1,161 @@
-# FPGA Hardware Median Filter (VHDL) 🖥️
+# FPGA Median Filter for Image Noise Reduction
 
-## Overview
-A complete hardware description logic (RTL) implementation of a digital image processing pipeline in VHDL. The system is designed to effectively remove salt-and-pepper noise from images using a 3x3 Median Filter, a method chosen specifically for its ability to clean extreme pixel values while preserving image edges and sharpness. 
+A VHDL implementation of a **3×3 median filter for FPGA-based image processing**, developed to reduce salt-and-pepper noise while preserving image edges.
 
-## Key Features
-* **Image Resolution & Depth:** Processes 256x256 pixel images with a 5-bit color depth per RGB channel.
-* **Vector Processing (Massive Parallelism):** The system processes an entire row of 256 pixels in a single clock cycle. This is achieved by utilizing VHDL `generate` statements to instantiate 256 parallel median filter units.
-* **Resource-Efficient Sorting:** Instead of a resource-heavy 9-element full sort, the architecture utilizes a "Median of Medians" approach. It performs three small independent Even-Odd sorts (3 elements each) for the rows, and one final sort for the results, drastically reducing the Logic Elements required and shortening the critical path.
-* **Latency-Compensated FSM:** The dedicated `Filter_FSM` orchestrates the pipeline. To account for the 4-clock-cycle processing delay, the FSM manages separate read and write counters, ensuring perfect synchronization between the extracted data and the processed output written to RAM.
-* **RGB Channel Separation:** Independent processing paths for Red, Green, and Blue channels operating simultaneously.
+The project implements a complete RTL processing pipeline including image memory, row buffering, parallel filtering logic, FSM-based control, and output storage.
+
+## Project Overview
+
+The system processes a 256×256 RGB image with 5-bit resolution per color channel.
+
+The architecture is designed around parallel row processing and a dedicated control FSM that coordinates memory reads, filtering latency, and output writes.
+
+## Processing Flow
+
+**Input Image**
+→ **ROM**
+→ **Row Buffering**
+→ **3×3 Sliding Windows**
+→ **Median Filtering**
+→ **FSM-Controlled Output Timing**
+→ **RAM**
+→ **Filtered Image**
+
+## Main Features
+
+- 3×3 median filtering for salt-and-pepper noise reduction
+- RGB image processing
+- 256×256 pixel image resolution
+- 5-bit representation per RGB channel
+- Parallel filtering architecture
+- FSM-controlled read/write sequencing
+- Row buffering for 3×3 neighborhood generation
+- ROM-based input image storage
+- RAM-based filtered output storage
+- FPGA-oriented RTL implementation
+- ModelSim-based functional verification
 
 ## Hardware Architecture
-* **Top-Level Entity (`Image_Procesing_Top.vhd`):** Integrates the FSM, Altera megafunction ROM/RAM blocks, row buffers, and the parallel filtering units.
-* **Line Buffers (`Buffer1.vhd`):** A shift-register structure that maintains the *low*, *mid*, and *high* rows required for the 3x3 spatial filter, including dynamic pixel padding for edge cases.
-* **Filter Logic (`Parallel_Filter_Row.vhd` & `Image_Pkg.vhd`):** Extracts 3x3 sliding windows from the padded rows and applies the median computation using the custom combinational sorting package.
-* **Memory Blocks:** Utilizes Altera `altsyncram` for robust 256x1280 memory management (ROM for input, RAM for output).
+
+### Top-Level Module
+
+`Image_Procesing_Top.vhd`
+
+The top-level entity integrates:
+
+- Input ROM
+- Output RAM
+- Row buffers
+- Parallel filtering logic
+- Filter control FSM
+- RGB processing paths
+
+### Row Buffering
+
+`Buffer1.vhd`
+
+The buffering logic maintains the image rows required to construct the 3×3 pixel neighborhoods used by the median filter.
+
+The design maintains the neighboring rows required for spatial filtering and handles image-boundary conditions.
+
+### Parallel Filter
+
+`Parallel_Filter_Row.vhd`
+
+This module applies the median-filter operation across the image row using multiple parallel filtering units.
+
+VHDL `generate` constructs are used to instantiate the repeated filtering logic.
+
+### Median Computation
+
+`Image_Pkg.vhd`
+
+The project uses a hierarchical median-selection approach based on smaller sorting operations rather than performing a complete 9-element sort for every 3×3 window.
+
+### Control FSM
+
+`Filter_FSM.vhd`
+
+The FSM coordinates:
+
+- Input memory reads
+- Row-buffer updates
+- Filter execution
+- Pipeline latency
+- Output memory writes
+
+Separate control of read and write timing is used to account for the processing delay through the filtering pipeline.
+
+## Memory Architecture
+
+The project uses FPGA memory blocks for image storage:
+
+- **ROM** – stores the input image
+- **RAM** – stores the filtered output image
+
+Memory-related modules include:
+
+- `ROM_1280_256_Port_1.vhd`
+- `ram_1280_256.vhd`
+
+## Project Structure
+
+- `Image_Procesing_Top.vhd` – Top-level system integration
+- `Filter_FSM.vhd` – Control FSM for memory and processing synchronization
+- `Buffer1.vhd` – Image row buffering
+- `Parallel_Filter_Row.vhd` – Parallel median-filter processing
+- `Image_Pkg.vhd` – Shared image-processing functions and median logic
+- `ROM_1280_256_Port_1.vhd` – Input image ROM
+- `ram_1280_256.vhd` – Output image RAM
+- `input image.jpg` – Input image containing salt-and-pepper noise
+- `output image.jpg` – Filtered output image
+- `RTL.jpeg` – RTL architecture view
+- `README.md` – Project documentation
 
 ## Visual Results
-The system takes a heavily noised image (salt-and-pepper interference) and outputs a clean, normalized 8-bit equivalent representation.
-* **Before:** `input image.jpg` - Noised image.
-* **After:** `output image.jpg` - Filtered image.
+
+### Input Image
+
+The input image contains salt-and-pepper noise and is used as the source data for the FPGA processing pipeline.
+
+`input image.jpg`
+
+### Filtered Output
+
+The output image demonstrates the effect of the 3×3 median filter after hardware processing.
+
+`output image.jpg`
 
 ## Tools & Technologies
-* VHDL (IEEE STD_LOGIC_1164, NUMERIC_STD)
-* Altera Quartus / Cyclone IV E[cite: 13]
-* RTL Viewer & ModelSim[cite: 8, 15]
+
+- VHDL
+- Intel / Altera Quartus
+- ModelSim
+- FPGA RTL Design
+- Finite State Machines
+- Digital Image Processing
+- ROM / RAM Interfacing
+- Parallel Hardware Architecture
+
+## Engineering Topics
+
+This project provided hands-on experience with:
+
+- RTL architecture design
+- FPGA-based image processing
+- Median filtering
+- Parallel hardware implementation
+- Finite State Machine design
+- Pipeline timing
+- Memory read/write synchronization
+- Row and line buffering
+- FPGA memory blocks
+- ModelSim verification
+- Hardware resource trade-offs
+- Debugging timing-related RTL issues
+
+## Result
+
+The implemented hardware pipeline successfully processes the input image and produces a filtered output with reduced salt-and-pepper noise.
+
+The project demonstrates how an image-processing algorithm can be translated from a software-style operation into a parallel RTL architecture suitable for FPGA implementation.
